@@ -3,6 +3,7 @@ const app = express()
 const multer=require('multer');
 const cors = require('cors')
 const mongoose = require('mongoose')
+const uploadm = require('./models/upload.model')
 require('dotenv').config()
 
 const http = require("http")
@@ -16,16 +17,14 @@ const upload=multer({
             cb(null,"uploads")
         },
         filename:function(req,file,cb){
-            cb(null,file.fieldname+"-"+Date.now()+".jpg");
+            cb(null,file.fieldname+"-"+Date.now()+".png");
         }
     })
 }).single("productImage");
 
 // const orders = require("./routes/order.routes")
 const auth = require("./routes/auth.route")
-const postroute = require("./routes/post.route")
-const user = require("./routes/user.route")
-const follow = require("./routes/follow.route")
+const user =require("./routes/user.route")
 const uploadr=require("./routes/upload.routes")
 
 const PORT = process.env.PORT || 5000
@@ -36,10 +35,8 @@ app.use(cors())
 
 // app.use("/v1/orders", orders)
 app.use("/v1/auth", auth)
-app.use("/v1/post", authlogin, postroute)
-app.use("/v1/user", authlogin, user)
-app.use("/v1/follow", authlogin, follow)
-app.use("/v1/upload",upload,uploadr)
+app.use("/v1/user",user)
+app.use("/v1/upload",uploadr)
 
 
 app.get("/", (req, res) => {
@@ -49,9 +46,22 @@ app.get("/", (req, res) => {
 
 
 
-// app.post("/upload",upload,(req,res)=>{
-//     res.send("File Upload");
-// })
+app.post("/upload",(req,res)=>{
+    upload(req,res,(err)=>{
+        if(err){
+            console.log(err);
+        }else{
+            const newupload=new uploadm({
+                productDetail:req.body.productDetail,
+                productPrice:req.body.productPrice,
+                productCategori:req.body.productCategori,
+                productImage:req.file.filename
+            })
+            newupload.save()
+            .then(()=>res.send('sucsess')).catch(err=>console.log(err))
+        }
+    })
+})
 
 const init = async () => {
     try {
