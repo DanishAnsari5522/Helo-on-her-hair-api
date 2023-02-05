@@ -1,13 +1,12 @@
 const upload = require("../models/upload.model")
+const mongoose = require('mongoose');
 
 
 const uploadProduct = async (req, res) => {
     try {
-        let { productDetail, productPrice, productCategori } = req.body
-        // console.log(req.body);
-        let { productImage } = req.file.filename;
-        res.send("File Upload" + req.file.filename);
-        if (!productDetail || !productPrice || !productCategori) {
+        let { productDetail, productPrice, productCategori, productImage} = req.body
+
+        if (!productDetail || !productPrice || !productCategori || !productImage) {
             return res.status(400).json({ success: false, message: "productdetail , productprice and productcategori are required" })
         } else {
             const data = await upload.create({ productDetail, productPrice, productCategori, productImage })
@@ -38,11 +37,11 @@ const getProductById = async (req, res) => {
         }
         if (mongoose.Types.ObjectId.isValid(_id)) {
             _id = mongoose.Types.ObjectId(_id)
-            const userInfo = await upload.findOne({ _id }).select('_id name email phone gender')
+            const userInfo = await upload.findOne({ _id }).select('_id productDetail productPrice productCategori productImage')
             if (!userInfo) {
                 return res.status(404).json({ success: false, message: 'user not found' })
             }
-            
+
             return res.status(200).json({
                 success: true, data: {
                     productDetail: userInfo.productDetail,
@@ -62,6 +61,7 @@ const getProductById = async (req, res) => {
 }
 
 
+
 const liveSearch = async (req, res) => {
     try {
         const { name } = req.query
@@ -75,10 +75,43 @@ const liveSearch = async (req, res) => {
     }
 }
 
+const deleteProduct = async (req, res) => {
+    try {
+        const { id: peoductID } = req.params;
+        const task = await upload.findOneAndDelete({ _id: peoductID })
+        if (!task) {
+            return res.status(400).json({ success: false, message: "Incorrect id" })
+        }
+        res.status(200).json({ task })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "server error" })
+
+    }
+
+}
+
+const updateProduct = async (req, res) => {
+    try {
+        let result=await upload.updateOne(
+            {_id:req.params.id},
+            {
+                $set:req.body
+            }
+        )
+        res.send(result)
+
+    } catch (error) {
+
+    }
+}
 
 module.exports = {
     uploadProduct,
     getProduct,
     getProductById,
-    liveSearch
+    liveSearch,
+    deleteProduct,
+    updateProduct
 }
